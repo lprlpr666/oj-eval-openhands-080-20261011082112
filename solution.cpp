@@ -14,15 +14,19 @@ int main() {
     
     // Build adjacency list for complement graph
     vector<vector<int>> adj(n + 1);
+    vector<int> degree(n + 1, 0);
     for (int i = 0; i < m; i++) {
         int x, y;
         cin >> x >> y;
         adj[x].push_back(y);
         adj[y].push_back(x);
+        degree[x]++;
+        degree[y]++;
     }
     
     vector<int> color(n + 1, -1);  // -1: unvisited, 0/1: colors
     vector<int> component_nodes;
+    vector<bool> can_be_invited(n + 1, false);
     int answer = 0;
     
     for (int i = 1; i <= n; i++) {
@@ -36,7 +40,7 @@ int main() {
             
             bool is_bipartite = true;
             
-            while (!q.empty() && is_bipartite) {
+            while (!q.empty()) {
                 int u = q.front();
                 q.pop();
                 
@@ -47,15 +51,27 @@ int main() {
                         component_nodes.push_back(v);
                     } else if (color[v] == color[u]) {
                         is_bipartite = false;
-                        break;
                     }
                 }
             }
             
-            // If component is bipartite, all nodes in it cannot be invited
-            if (is_bipartite) {
-                answer += component_nodes.size();
+            if (!is_bipartite && component_nodes.size() >= 3) {
+                // This component contains an odd cycle
+                // A node can be part of an odd cycle if and only if it has degree >= 2
+                // and is in a non-bipartite component
+                for (int node : component_nodes) {
+                    if (degree[node] >= 2) {
+                        can_be_invited[node] = true;
+                    }
+                }
             }
+        }
+    }
+    
+    // Count ministers who cannot be invited
+    for (int i = 1; i <= n; i++) {
+        if (!can_be_invited[i]) {
+            answer++;
         }
     }
     
